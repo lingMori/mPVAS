@@ -138,12 +138,39 @@ func (user *UserKey) Sign_1(round string, x *big.Int, publicParams *PublicParame
 	return sign_1, nil
 }
 
-func (user *UserKey) Sign_2(round sting, sign_1 *bn256.G1, publicParams *PublicParameters) (*bn256.G1, error) {
+func (user *UserKey) Sign_2(round string, sign_1 *bn256.G1, publicParams *PublicParameters) (*bn256.G1, error) {
 	// user i generate sign_2_j under user j's key and secret
 
 	// H1(t)^ekj,i
 	H1t := Hash_1([]byte(round))
+	H1t_ekji := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID])
 
+	//sign_1^[s]j
+	sign_1_sj := new(bn256.G1).ScalarMult(sign_1, user.SSShare)
+
+	sign_2 := new(bn256.G1).Add(H1t_ekji, sign_1_sj)
+	return sign_2, nil
+}
+
+func (user *UserKey) Sign_4(round string, sign_3 *bn256.G1, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
+	// user i generate sign_4 under user i's key and secret
+
+	// H1(t)^ekj,i
+	H1t := Hash_1([]byte(round))
+	H1t_ekii := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID])
+
+	Ht := Hash_org([]byte(round))
+	Ht_ski := new(bn256.G1).ScalarMult(Ht, user.SK)
+
+	g1_x := new(bn256.G1).ScalarBaseMult(x)
+
+	temp := new(bn256.G1).Add(Ht_ski, g1_x)
+	temp_ss := new(bn256.G1).ScalarMult(temp, user.SSShare)
+
+	sign_4Result := new(bn256.G1).Add(H1t_ekii, temp_ss)
+	sign_4Result = new(bn256.G1).Add(sign_3, sign_4Result)
+
+	return sign_4Result, nil
 }
 
 // orignal hash function H: {0, 1}* -> G1
