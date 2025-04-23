@@ -2,6 +2,7 @@ package mpvasbase
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"fmt"
 	"math/big"
 
@@ -38,6 +39,11 @@ type UserKey struct {
 	SSShare              *big.Int
 	EncKeys              map[int]*big.Int
 	LagrangeCoefficients map[int]*big.Int
+}
+
+type Aggeregators struct {
+	PublicParams *PublicParameters
+	SigningSet   map[int][]int // SigningSet[i] means a set of users ID who sign for user[i]
 }
 
 func SetUp(n, k int) (*PublicParameters, []*UserKey, error) {
@@ -116,15 +122,48 @@ func SetUp(n, k int) (*PublicParameters, []*UserKey, error) {
 
 }
 
-func (user *UserKey) Sign(round string, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
+func (user *UserKey) Sign_1(round string, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
 	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SK.String()))
 	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SSShare.String()))
 	// logger.Info("the user's key is", zap
-	return nil, nil
+
+	// fiset step: create initial signature
+	// H(t)^sk_i
+	Ht := Hash_org([]byte(round))
+	Ht_ski := new(bn256.G1).ScalarMult(Ht, user.SK)
+
+	g1_x := new(bn256.G1).ScalarBaseMult(x)
+	sign_1 := new(bn256.G1).Add(Ht_ski, g1_x)
+
+	return sign_1, nil
 }
 
-func (user *UserKey) Verify(round string, x *big.Int, publicParams *PublicParameters) error {
-	return nil
+func (user *UserKey) Sign_2(round sting, sign_1 *bn256.G1, publicParams *PublicParameters) (*bn256.G1, error) {
+	// user i generate sign_2_j under user j's key and secret
+
+	// H1(t)^ekj,i
+	H1t := Hash_1([]byte(round))
+
+}
+
+// orignal hash function H: {0, 1}* -> G1
+func Hash_org(data []byte) *bn256.G1 {
+	hash := sha256.Sum256(data)
+	// conver hash data to big.int
+	hashint := new(big.Int).SetBytes(hash[:])
+	hashint = new(big.Int).Mod(hashint, bn256.Order)
+
+	return new(bn256.G1).ScalarBaseMult(hashint)
+}
+
+// hash function H1: {0, 1}* -> G2
+func Hash_1(data []byte) *bn256.G1 {
+	hash := sha256.Sum256(append([]byte("H1"), data...))
+	// conver hash data to big.int
+	hashint := new(big.Int).SetBytes(hash[:])
+	hashint = new(big.Int).Mod(hashint, bn256.Order)
+
+	return new(bn256.G1).ScalarBaseMult(hashint)
 }
 
 func checkSumOfEnkeys(publicParams *PublicParameters, userKeys *UserKey) error {
