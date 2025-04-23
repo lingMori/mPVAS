@@ -6,8 +6,17 @@ import (
 	"math/big"
 
 	shamir "go.bryk.io/pkg/crypto/shamir"
+	zap "go.uber.org/zap"
 	"golang.org/x/crypto/bn256"
 )
+
+var logger *zap.Logger
+
+func init() {
+	logger, _ = zap.NewProduction()
+}
+
+// The public parameters are the parameters that are known by all the users.
 
 // public parameters pp = (H, H1, G1, G2, GT , g1, g2, e, p, n, k),
 type PublicParameters struct {
@@ -58,6 +67,7 @@ func SetUp(n, k int) (*PublicParameters, []*UserKey, error) {
 
 	// generate userkey
 	userKeys := make([]*UserKey, publicParams.N)
+	sumOfSki := new(big.Int).SetInt64(0)
 	for i := 0; i < publicParams.N; i++ {
 		ski, err := rand.Int(rand.Reader, publicParams.P)
 		if err != nil {
@@ -71,29 +81,62 @@ func SetUp(n, k int) (*PublicParameters, []*UserKey, error) {
 			EncKeys:              make(map[int]*big.Int),
 			LagrangeCoefficients: make(map[int]*big.Int),
 		}
+		sumOfSki = new(big.Int).Add(sumOfSki, ski)
+		sumOfSki = new(big.Int).Mod(sumOfSki, publicParams.P)
 	}
 
-	for i := 0; i < publicParams.N; i++ {
+	for i := range publicParams.N {
 
 		sumKeys := new(big.Int).SetInt64(0)
 
-		for j := 0; j < publicParams.K+1; j++ {
+		for j := 1; j <= publicParams.K; j++ {
 			ek, err := rand.Int(rand.Reader, publicParams.P)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to generate ek: %v", err)
 			}
 			userKeys[i].EncKeys[j] = ek
+			// logger.Info("the user's key is", zap.Int("user", i), zap.Int("key", j), zap.String("value", ek.String()))
 			sumKeys = new(big.Int).Add(sumKeys, ek)
 			sumKeys = new(big.Int).Mod(sumKeys, publicParams.P)
 		}
-
+		// logger.Info("the user's key is", zap.Int("user", i), zap.String("value", sumKeys.String()))
 		lastKey := new(big.Int).Neg(sumKeys)
 		lastKey = new(big.Int).Mod(lastKey, publicParams.P)
 		userKeys[i].EncKeys[publicParams.K+1] = lastKey
+
+		checkSumOfEnkeys(publicParams, userKeys[i])
 	}
 
-	// precompute lagrange coefficients
+	// set vk
+	g2s := new(bn256.G2).ScalarBaseMult(s)
+	publicParams.VK1 = new(bn256.G2).ScalarMult(g2s, sumOfSki)
+	publicParams.VK2 = g2s
 
 	return publicParams, userKeys, nil
 
+}
+
+func (user *UserKey) Sign(round string, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
+	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SK.String()))
+	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SSShare.String()))
+	// logger.Info("the user's key is", zap
+	return nil, nil
+}
+
+func (user *UserKey) Verify(round string, x *big.Int, publicParams *PublicParameters) error {
+	return nil
+}
+
+func checkSumOfEnkeys(publicParams *PublicParameters, userKeys *UserKey) error {
+	// sum all key to check if the sum is 0
+	sum := new(big.Int).SetInt64(0)
+	for j := 1; j <= publicParams.K+1; j++ {
+		sum = new(big.Int).Add(sum, userKeys.EncKeys[j])
+		sum = new(big.Int).Mod(sum, publicParams.P)
+	}
+	if sum.Cmp(big.NewInt(0)) != 0 {
+		return fmt.Errorf("the sum of keys is not 0")
+	}
+
+	return nil
 }

@@ -14,6 +14,9 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Public Params: %v\n", publicParams)
+	// log structure data of pp and userkeys
+
+	fmt.Println(publicParams)
+	fmt.Println(userKeys)
 
 }
