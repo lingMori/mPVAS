@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"math/big"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	shamir "go.bryk.io/pkg/crypto/shamir"
 	zap "go.uber.org/zap"
-	"golang.org/x/crypto/bn256"
 )
 
 var logger *zap.Logger
