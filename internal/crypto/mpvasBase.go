@@ -142,8 +142,13 @@ func (user *UserKey) Sign_2(round string, sign_1 *bn256.G1, publicParams *Public
 	// user i generate sign_2_j under user j's key and secret
 
 	// H1(t)^ekj,i
+
+	encKey, exists := user.EncKeys[user.ID+1]
+	if !exists || encKey == nil {
+		return nil, fmt.Errorf("encryption key not found or is nil for index %d of user %d", user.ID, user.ID+1)
+	}
 	H1t := Hash_1([]byte(round))
-	H1t_ekji := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID])
+	H1t_ekji := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID+1])
 
 	//sign_1^[s]j
 	sign_1_sj := new(bn256.G1).ScalarMult(sign_1, user.SSShare)
@@ -157,7 +162,7 @@ func (user *UserKey) Sign_4(round string, sign_3 *bn256.G1, x *big.Int, publicPa
 
 	// H1(t)^ekj,i
 	H1t := Hash_1([]byte(round))
-	H1t_ekii := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID])
+	H1t_ekii := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID+1])
 
 	Ht := Hash_org([]byte(round))
 	Ht_ski := new(bn256.G1).ScalarMult(Ht, user.SK)
