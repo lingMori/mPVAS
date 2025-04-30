@@ -122,7 +122,7 @@ func SetUp(n, k int) (*PublicParameters, []*UserKey, error) {
 
 }
 
-func (user *UserKey) Sign_1(round string, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
+func (user *UserKey) InitialSignature(round string, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
 	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SK.String()))
 	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SSShare.String()))
 	// logger.Info("the user's key is", zap
@@ -138,17 +138,29 @@ func (user *UserKey) Sign_1(round string, x *big.Int, publicParams *PublicParame
 	return sign_1, nil
 }
 
-func (user *UserKey) Sign_2(round string, sign_1 *bn256.G1, publicParams *PublicParameters) (*bn256.G1, error) {
-	// user i generate sign_2_j under user j's key and secret
+func (user *UserKey) CooperativeSignature(round string, sign_1 *bn256.G1, publicParams *PublicParameters, forUser int) (*bn256.G1, error) {
+	// user: forUser is the user who gives the signature to user i
+	// Find the appropriate encryption key for this user
+	// In this implementation, we use the user's position in the signing set as the key index
+	// Since we're using the next k users after forUser, we need to calculate relative position
 
 	// H1(t)^ekj,i
+	// get the relative position of user i and user j
+	relativePos := 0
+	if user.ID > forUser {
+		relativePos = user.ID - forUser
+	} else {
+		relativePos = user.ID + publicParams.N - forUser
+	}
 
-	encKey, exists := user.EncKeys[user.ID+1]
+	keyIndex := relativePos
+
+	encKey, exists := user.EncKeys[keyIndex]
 	if !exists || encKey == nil {
 		return nil, fmt.Errorf("encryption key not found or is nil for index %d of user %d", user.ID, user.ID+1)
 	}
 	H1t := Hash_1([]byte(round))
-	H1t_ekji := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID+1])
+	H1t_ekji := new(bn256.G1).ScalarMult(H1t, encKey)
 
 	//sign_1^[s]j
 	sign_1_sj := new(bn256.G1).ScalarMult(sign_1, user.SSShare)
@@ -157,7 +169,7 @@ func (user *UserKey) Sign_2(round string, sign_1 *bn256.G1, publicParams *Public
 	return sign_2, nil
 }
 
-func (user *UserKey) Sign_4(round string, sign_3 *bn256.G1, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
+func (user *UserKey) FinalizeSignature(round string, sign_3 *bn256.G1, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
 	// user i generate sign_4 under user i's key and secret
 
 	// H1(t)^ekj,i

@@ -7,7 +7,7 @@ toolchain go1.23.8
 require (
 	github.com/libp2p/go-libp2p v0.39.1
 	go.bryk.io/pkg v0.0.0-20250411182835-130bbccf42ad
-	golang.org/x/crypto v0.37.0
+	golang.org/x/crypto v0.37.0 // indirect
 )
 
 require (
@@ -21,7 +21,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/gosigar v0.14.3 // indirect
-	github.com/ethereum/go-ethereum v1.15.9 // indirect
+	github.com/ethereum/go-ethereum v1.15.9
 	github.com/flynn/noise v1.1.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -107,7 +107,7 @@ require (
 	go.uber.org/fx v1.23.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.0 
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
