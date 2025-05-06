@@ -1,8 +1,9 @@
 {
     // ========== Visuals ==========
     "editor.cursorSmoothCaretAnimation": "on",
-    "editor.fontFamily": "Input Mono, monospace",
-    "terminal.integrated.fontFamily": "Hack Nerd Font",
+    "editor.fontFamily": "Maple Mono NF",
+    "terminal.integrated.fontFamily": "Maple Mono NF",
+    "editor.fontLigatures": "'calt'",
     "editor.guides.bracketPairs": "active",
     "editor.lineNumbers": "interval",
     "editor.renderWhitespace": "boundary",
