@@ -1,8 +1,16 @@
 package mpvasbase_test
 
+// Package mpvasbase_test は mpvasbase をテストするパッケージ
+// go test -json -v ./... 2>&1 | gotestfmt
+
 import (
+	"crypto/rand"
+	"math/big"
 	"testing"
 
+	mpvasbase "mPVAS/internal/crypto"
+
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	shamir "go.bryk.io/pkg/crypto/shamir"
 )
 
@@ -12,6 +20,11 @@ func shamir_secrect_test(t *testing.T, secret string, n, k int) {
 	shares, err := shamir.Split([]byte(secret), n, k)
 	if err != nil {
 		t.Error(err)
+	}
+
+	t.Logf("秘密を分割しました")
+	for i, share := range shares {
+		t.Logf("シェア%d: %d bytes", i+1, len(share))
 	}
 
 	// 秘密を復元
@@ -28,11 +41,52 @@ func shamir_secrect_test(t *testing.T, secret string, n, k int) {
 	}
 }
 
-func TestMpvasbase(t *testing.T) {
-	secrect := "123456"
+func InitialSignatureTest(t *testing.T, round int) {
 
-	shamir_secrect_test(t, secrect, 10, 5)
-	shamir_secrect_test(t, secrect, 10, 6)
-	shamir_secrect_test(t, secrect, 10, 7)
-	shamir_secrect_test(t, secrect, 10, 8)
+	pp, users, err := mpvasbase.SetUp(10, 6)
+
+	if err != nil {
+		t.Errorf("err: %v", err)
+	}
+
+	t.Logf("初めのシグネチャを作成します　n: %d, k: %d", pp.N, pp.K)
+	tRoundInitialSignature := make([]*bn256.G1, pp.N)
+	// user signature collect
+	for index, user := range users {
+		t.Logf("user signature collect: %d", user.ID)
+		// 数値と文字をreplace  (int ==> string)
+		roundString := big.NewInt(int64(round)).Text(10)
+		tRoundInitialSignature[user.ID], err = user.InitialSignature(roundString, big.NewInt(int64(index+2000)), pp)
+	}
+
+	t.Logf("初めのシグネチャを作成しました")
+
+	// print tRoundInitialSignature
+	for i, signature := range tRoundInitialSignature {
+		t.Logf("tRoundInitialSignature[%d]: %.20s", i, signature.String())
+	}
+
+}
+
+func MpvasBaseProtocolTest(t *testing.T, round int, n, k int) {
+
+	pp, users, err := mpvasbase.SetUp(n, k)
+	if err != nil {
+		t.Errorf("err: %v", err)
+	}
+	t.Logf("mpvas base protocolを実行します　n: %d, k: %d", pp.N, pp.K)
+
+	roundMessage := "round" + string(round)
+	userSecretInput := make([]*big.Int, pp.N)
+
+	for i := 0; i < pp.N; i++ {
+		secretValue, _ := rand.Int(rand.Reader, pp.P)
+		userSecretInput[i] = secretValue
+
+	}
+
+}
+
+func TestShamirSecrectShare(t *testing.T) {
+	InitialSignatureTest(t, 1)
 }

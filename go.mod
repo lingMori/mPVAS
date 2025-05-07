@@ -1,6 +1,6 @@
 module mPVAS
 
-go 1.23.8
+go 1.24.3
 
 require (
 	github.com/libp2p/go-libp2p v0.39.1
