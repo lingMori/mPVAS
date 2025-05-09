@@ -192,8 +192,9 @@ func (user *UserKey) FinalizeSignature(round string, sign_3 *bn256.G1, x *big.In
 	// user i generate sign_4 under user i's key and secret
 
 	// H1(t)^ekj,i
+
 	H1t := Hash_1([]byte(round))
-	H1t_ekii := new(bn256.G1).ScalarMult(H1t, user.EncKeys[user.ID+1])
+	H1t_ekii := new(bn256.G1).ScalarMult(H1t, user.EncKeys[publicParams.K+1])
 
 	Ht := Hash_org([]byte(round))
 	Ht_ski := new(bn256.G1).ScalarMult(Ht, user.SK)

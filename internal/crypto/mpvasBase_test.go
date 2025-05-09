@@ -119,6 +119,24 @@ func MpvasBaseProtocolTest(t *testing.T, round int, n, k int) {
 	}
 
 	// 3. 署名者は、署名を集める
+	sigma3s := make([]*bn256.G1, pp.N)
+	for i := 0; i < pp.N; i++ {
+		sigma3 := sigma2s[i][0]
+		for _, contributor := range sigma2s[i] {
+			sigma3 = new(bn256.G1).Add(sigma3, contributor)
+		}
+		sigma3s[i] = sigma3
+	}
+
+	// 4. 最终的な署名を生成する
+	sigma4s := make([]*bn256.G1, pp.N)
+	for i := 0; i < pp.N; i++ {
+		sigma4s[i], err = users[i].FinalizeSignature(roundMessage, sigma3s[i], userSecretInput[i], pp)
+		if err != nil {
+			t.Errorf("err: %v", err)
+		}
+	}
+
 }
 
 func TestMpvasBaseProtocol(t *testing.T) {
