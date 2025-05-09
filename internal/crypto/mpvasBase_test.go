@@ -6,6 +6,7 @@ package mpvasbase_test
 import (
 	"crypto/rand"
 	"math/big"
+	"strconv"
 	"testing"
 
 	mpvasbase "mPVAS/internal/crypto"
@@ -76,17 +77,32 @@ func MpvasBaseProtocolTest(t *testing.T, round int, n, k int) {
 	}
 	t.Logf("mpvas base protocolを実行します　n: %d, k: %d", pp.N, pp.K)
 
-	roundMessage := "round" + string(round)
+	roundMessage := "round-" + strconv.Itoa(round)
 	userSecretInput := make([]*big.Int, pp.N)
+	// set a sumX to check the aggregate value
+	sumX := big.NewInt(0)
 
 	for i := 0; i < pp.N; i++ {
 		secretValue, _ := rand.Int(rand.Reader, pp.P)
 		userSecretInput[i] = secretValue
+		sumX.Add(sumX, secretValue)
+		sumX.Mod(sumX, pp.P)
+	}
 
+	t.Logf("sumX: %s", sumX.String())
+
+	// Signature Phase
+	// 1. 署名者は、initial signature を生成し
+	sigma1s := make([]*bn256.G1, pp.N)
+	for i := 0; i < pp.N; i++ {
+		sigma1s[i], err = users[i].InitialSignature(roundMessage, userSecretInput[i], pp)
+		if err != nil {
+			t.Errorf("err: %v", err)
+		}
 	}
 
 }
 
-func TestShamirSecrectShare(t *testing.T) {
-	InitialSignatureTest(t, 1)
+func TestMpvasBaseProtocol(t *testing.T) {
+	MpvasBaseProtocolTest(t, 1, 10, 6)
 }
