@@ -77,6 +77,9 @@ func MpvasBaseProtocolTest(t *testing.T, round int, n, k int) {
 	}
 	t.Logf("mpvas base protocolを実行します　n: %d, k: %d", pp.N, pp.K)
 
+	// aggregatorを生成し
+	aggregator := mpvasbase.InitialAggregator(pp)
+
 	roundMessage := "round-" + strconv.Itoa(round)
 	userSecretInput := make([]*big.Int, pp.N)
 	// set a sumX to check the aggregate value
@@ -101,6 +104,21 @@ func MpvasBaseProtocolTest(t *testing.T, round int, n, k int) {
 		}
 	}
 
+	// 2. 署名者は、初期署名を集める
+	sigma2s := make(map[int][]*bn256.G1, pp.N)
+	for i := 0; i < pp.N; i++ {
+		signSet := aggregator.SigningSet[i]
+		sigma2s[i] = make([]*bn256.G1, len(signSet))
+
+		for j := 0; j < len(signSet); j++ {
+			sigma2s[i][j], err = users[signSet[j]].CooperativeSignature(roundMessage, sigma1s[i], pp, i)
+			if err != nil {
+				t.Errorf("err: %v", err)
+			}
+		}
+	}
+
+	// 3. 署名者は、署名を集める
 }
 
 func TestMpvasBaseProtocol(t *testing.T) {

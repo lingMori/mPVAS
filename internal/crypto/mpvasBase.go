@@ -122,6 +122,24 @@ func SetUp(n, k int) (*PublicParameters, []*UserKey, error) {
 
 }
 
+func InitialAggregator(params *PublicParameters) *Aggeregators {
+	// create a new aggregator
+	agg := &Aggeregators{
+		PublicParams: params,
+		SigningSet:   make(map[int][]int),
+	}
+
+	// create the signing set
+	for i := 0; i < params.N; i++ {
+		set := make([]int, params.K)
+		for j := 0; j < params.K; j++ {
+			set[j] = (i + j + 1) % params.N
+		}
+		agg.SigningSet[i] = set
+	}
+	return agg
+}
+
 func (user *UserKey) InitialSignature(round string, x *big.Int, publicParams *PublicParameters) (*bn256.G1, error) {
 	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SK.String()))
 	// logger.Info("the user's key is", zap.Int("user", user.ID), zap.String("value", user.SSShare.String()))
@@ -166,6 +184,7 @@ func (user *UserKey) CooperativeSignature(round string, sign_1 *bn256.G1, public
 	sign_1_sj := new(bn256.G1).ScalarMult(sign_1, user.SSShare)
 
 	sign_2 := new(bn256.G1).Add(H1t_ekji, sign_1_sj)
+
 	return sign_2, nil
 }
 
