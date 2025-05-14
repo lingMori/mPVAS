@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"math/big"
 
+	shamir "mPVAS/internal/math/shamir"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	shamir "go.bryk.io/pkg/crypto/shamir"
 	zap "go.uber.org/zap"
 )
 
