@@ -185,6 +185,7 @@ func (user *UserKey) CooperativeSignature(round string, sign_1 *bn256.G1, public
 
 	sign_2 := new(bn256.G1).Add(H1t_ekji, sign_1_sj)
 
+	// TODO: 这里有个问题，sss算法的share能单纯作为g1的倍数被累加吗？这样可以恢复出原来的数据吗？
 	return sign_2, nil
 }
 
