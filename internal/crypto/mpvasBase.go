@@ -1,4 +1,4 @@
-package mpvasbase
+package mpvas
 
 import (
 	"bytes" // For comparing GT points

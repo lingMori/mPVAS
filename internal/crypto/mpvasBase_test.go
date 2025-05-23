@@ -1,4 +1,4 @@
-package mpvasbase
+package mpvas
 
 import (
 	// For comparing marshalled points
