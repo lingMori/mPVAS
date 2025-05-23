@@ -1,0 +1,5 @@
+package mpvas
+
+func InitBasicMpvasModel() {
+
+}
